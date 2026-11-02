@@ -37,29 +37,381 @@
       font-weight: normal;
       letter-spacing: 2px;
     }
+    .toolbar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 12px 24px;
+      background: #121816;
+      border-bottom: 1px solid #26302c;
+    }
+    .tool-button {
+      padding: 9px 12px;
+      background: #0d1110;
+      border: 1px solid #26302c;
+      color: #cfd8d3;
+      font: inherit;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .tool-button:hover, .tool-button:focus-visible { border-color: #c9a23c; outline: none; }
+    .tool-button[aria-pressed="true"] { border-color: #c9a23c; color: #fff; }
+    .tool-button.danger { color: #ef7777; }
+    .brush-control {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: auto;
+      color: #9aa8a1;
+      font-size: 12px;
+    }
+    input[type="range"] { accent-color: #c9a23c; }
+    .toolbar-status {
+      flex-basis: 100%;
+      min-height: 16px;
+      color: #75827c;
+      font-size: 11px;
+    }
     main {
       flex: 1;
       min-height: 0;
       display: grid;
       place-items: center;
-      padding: 24px;
+      padding: 20px;
     }
-    img {
-      display: block;
-      max-width: 100%;
-      max-height: calc(100vh - 100px);
-      object-fit: contain;
+    .map-wrap {
+      position: relative;
+      width: min(100%, calc(100vh - 190px));
+      aspect-ratio: 1;
+      overflow: hidden;
       border: 1px solid #26302c;
+      background: #121816;
+    }
+    #mapImage, #mapCanvas {
+      position: absolute;
+      inset: 0;
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+    #mapImage { object-fit: fill; }
+    #mapCanvas { touch-action: none; }
+    .minimap {
+      position: absolute;
+      z-index: 1;
+      top: 12px;
+      right: 12px;
+      width: clamp(120px, 18vw, 200px);
+      padding: 8px;
+      background: rgba(13, 17, 16, .92);
+      border: 1px solid #46514b;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, .45);
+      pointer-events: none;
+    }
+    .minimap h2 {
+      margin: 0 0 6px;
+      color: #cfd8d3;
+      font-size: 10px;
+      font-weight: normal;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+    #minimapCanvas {
+      display: block;
+      width: 100%;
+      aspect-ratio: 1;
+      border: 1px solid #26302c;
+    }
+    .legend {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 6px;
+      color: #9aa8a1;
+      font-size: 9px;
+    }
+    .legend-path { color: #34d399; }
+    .legend-obstacle { color: #ff626b; }
+    @media (max-width: 600px) {
+      header { padding: 12px 16px; }
+      .toolbar { padding: 10px 16px; }
+      .brush-control { margin-left: 0; }
+      main { padding: 12px; }
+      .map-wrap { width: min(100%, calc(100vh - 240px)); }
     }
   </style>
 </head>
 <body>
   <header>
-    <a href="../index.html">← Menu</a>
-    <h1>testMap_01</h1>
+    <a href="../index.html">← Меню</a>
+    <h1>testMap_01 — Редактор карты</h1>
   </header>
+  <section class="toolbar" aria-label="Инструменты редактора">
+    <button class="tool-button" id="pathTool" type="button" aria-pressed="true">Рисовать пути</button>
+    <button class="tool-button" id="obstacleTool" type="button" aria-pressed="false">Рисовать преграды</button>
+    <button class="tool-button" id="undoButton" type="button">Отменить</button>
+    <button class="tool-button danger" id="clearButton" type="button">Очистить</button>
+    <button class="tool-button" id="exportButton" type="button">Скачать JSON</button>
+    <label class="brush-control" for="brushSize">
+      Размер кисти
+      <input id="brushSize" type="range" min="12" max="160" value="48">
+      <output id="brushValue" for="brushSize">48</output>
+    </label>
+    <div class="toolbar-status" id="status" role="status" aria-live="polite">
+      Путь: область, по которой смогут передвигаться юниты. Преграда: зона, блокирующая движение и обзор.
+    </div>
+  </section>
   <main>
-    <img src="maps/testMap_01.png" alt="Карта testMap_01">
+    <div class="map-wrap" aria-label="Поле рисования карты">
+      <img id="mapImage" src="maps/testMap_01.png" alt="Карта testMap_01">
+      <canvas id="mapCanvas" aria-label="Рисуйте маршруты и преграды поверх карты"></canvas>
+      <aside class="minimap" aria-label="Мини-карта разметки">
+        <h2>Мини-карта</h2>
+        <canvas id="minimapCanvas"></canvas>
+        <div class="legend">
+          <span class="legend-path">● Пути</span>
+          <span class="legend-obstacle">● Преграды</span>
+        </div>
+      </aside>
+    </div>
   </main>
+  <script>
+    const mapId = 'testMap_01';
+    const storageKey = `strategyOfWar.map.${mapId}.editor`;
+    const mapImage = document.getElementById('mapImage');
+    const mapCanvas = document.getElementById('mapCanvas');
+    const mapContext = mapCanvas.getContext('2d');
+    const minimapCanvas = document.getElementById('minimapCanvas');
+    const minimapContext = minimapCanvas.getContext('2d');
+    const pathTool = document.getElementById('pathTool');
+    const obstacleTool = document.getElementById('obstacleTool');
+    const brushSize = document.getElementById('brushSize');
+    const brushValue = document.getElementById('brushValue');
+    const status = document.getElementById('status');
+    const colors = {
+      path: { stroke: '#34d399', fill: 'rgba(52, 211, 153, 0.35)' },
+      obstacle: { stroke: '#ff626b', fill: 'rgba(255, 68, 78, 0.38)' }
+    };
+    let activeTool = 'path';
+    let shapes = [];
+    let currentShape = null;
+    let mapWidth = 0;
+    let mapHeight = 0;
+
+    function setStatus(message) {
+      status.textContent = message;
+    }
+
+    function resizeCanvas(canvas, context, width, height) {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      context.setTransform(canvas.width / width, 0, 0, canvas.height / height, 0, 0);
+    }
+
+    function prepareCanvases() {
+      if (!mapWidth || !mapHeight) return;
+      resizeCanvas(mapCanvas, mapContext, mapWidth, mapHeight);
+      resizeCanvas(minimapCanvas, minimapContext, mapWidth, mapHeight);
+      redraw();
+    }
+
+    function drawShape(context, shape) {
+      if (!shape.points.length) return;
+      const style = colors[shape.type];
+      context.save();
+      context.lineWidth = shape.width;
+      context.lineCap = 'round';
+      context.lineJoin = 'round';
+      context.strokeStyle = style.stroke;
+      context.fillStyle = style.fill;
+      if (shape.type === 'obstacle') {
+        context.shadowColor = style.stroke;
+        context.shadowBlur = shape.width * 0.18;
+      }
+      context.beginPath();
+      context.moveTo(shape.points[0].x, shape.points[0].y);
+      for (let index = 1; index < shape.points.length; index += 1) {
+        context.lineTo(shape.points[index].x, shape.points[index].y);
+      }
+      if (shape.points.length === 1) {
+        context.lineTo(shape.points[0].x + 0.01, shape.points[0].y + 0.01);
+      }
+      context.stroke();
+      context.restore();
+    }
+
+    function redraw() {
+      mapContext.clearRect(0, 0, mapWidth, mapHeight);
+      minimapContext.clearRect(0, 0, mapWidth, mapHeight);
+      minimapContext.drawImage(mapImage, 0, 0, mapWidth, mapHeight);
+      for (const shape of shapes) {
+        drawShape(mapContext, shape);
+        drawShape(minimapContext, shape);
+      }
+      if (currentShape) {
+        drawShape(mapContext, currentShape);
+        drawShape(minimapContext, currentShape);
+      }
+    }
+
+    function saveShapes() {
+      try {
+        localStorage.setItem(storageKey, JSON.stringify({
+          version: 1,
+          map: mapId,
+          width: mapWidth,
+          height: mapHeight,
+          paths: shapes.filter(shape => shape.type === 'path'),
+          obstacles: shapes.filter(shape => shape.type === 'obstacle')
+        }));
+        setStatus(`Автосохранено · маршрутов: ${shapes.filter(shape => shape.type === 'path').length} · преград: ${shapes.filter(shape => shape.type === 'obstacle').length}`);
+      } catch (error) {
+        setStatus(`Не удалось сохранить разметку: ${error.message}`);
+      }
+    }
+
+    function loadShapes() {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (!saved) return null;
+        const data = JSON.parse(saved);
+        if (data.version !== 1 || data.map !== mapId || !Array.isArray(data.paths) || !Array.isArray(data.obstacles)) {
+          throw new Error('формат сохранённой карты не поддерживается');
+        }
+        const savedShapes = [
+          ...data.paths.map(shape => ({ ...shape, type: 'path' })),
+          ...data.obstacles.map(shape => ({ ...shape, type: 'obstacle' }))
+        ];
+        if (!savedShapes.every(shape =>
+          Number.isFinite(shape.width) &&
+          shape.width > 0 &&
+          Array.isArray(shape.points) &&
+          shape.points.every(point =>
+            Number.isFinite(point.x) &&
+            Number.isFinite(point.y) &&
+            point.x >= 0 &&
+            point.x <= mapWidth &&
+            point.y >= 0 &&
+            point.y <= mapHeight
+          )
+        )) {
+          throw new Error('в сохранённых данных есть некорректная разметка');
+        }
+        shapes = savedShapes;
+        return true;
+      } catch (error) {
+        setStatus(`Не удалось загрузить разметку: ${error.message}`);
+        return false;
+      }
+    }
+
+    function setTool(tool) {
+      activeTool = tool;
+      pathTool.setAttribute('aria-pressed', String(tool === 'path'));
+      obstacleTool.setAttribute('aria-pressed', String(tool === 'obstacle'));
+      setStatus(tool === 'path'
+        ? 'Рисуйте маршруты: юниты смогут передвигаться по отмеченным линиям.'
+        : 'Рисуйте преграды: отмеченные зоны предназначены для блокировки движения и обзора.');
+    }
+
+    function canvasPoint(event) {
+      const rect = mapCanvas.getBoundingClientRect();
+      return {
+        x: Math.max(0, Math.min(mapWidth, (event.clientX - rect.left) * mapWidth / rect.width)),
+        y: Math.max(0, Math.min(mapHeight, (event.clientY - rect.top) * mapHeight / rect.height))
+      };
+    }
+
+    pathTool.addEventListener('click', () => setTool('path'));
+    obstacleTool.addEventListener('click', () => setTool('obstacle'));
+    brushSize.addEventListener('input', () => {
+      brushValue.value = brushSize.value;
+    });
+
+    mapCanvas.addEventListener('pointerdown', event => {
+      if (!mapWidth || !mapHeight) return;
+      event.preventDefault();
+      mapCanvas.setPointerCapture(event.pointerId);
+      currentShape = {
+        type: activeTool,
+        width: Number(brushSize.value) * mapWidth / mapCanvas.getBoundingClientRect().width,
+        points: [canvasPoint(event)]
+      };
+      redraw();
+    });
+    mapCanvas.addEventListener('pointermove', event => {
+      if (!currentShape) return;
+      currentShape.points.push(canvasPoint(event));
+      redraw();
+    });
+    function finishStroke() {
+      if (!currentShape) return;
+      shapes.push(currentShape);
+      currentShape = null;
+      redraw();
+      saveShapes();
+    }
+    mapCanvas.addEventListener('pointerup', finishStroke);
+    mapCanvas.addEventListener('pointercancel', finishStroke);
+
+    document.getElementById('undoButton').addEventListener('click', () => {
+      if (!shapes.length) {
+        setStatus('Нечего отменять.');
+        return;
+      }
+      shapes.pop();
+      redraw();
+      saveShapes();
+    });
+    document.getElementById('clearButton').addEventListener('click', () => {
+      if (!shapes.length) {
+        setStatus('На карте пока нет разметки.');
+        return;
+      }
+      if (!window.confirm('Удалить все маршруты и преграды этой карты?')) return;
+      shapes = [];
+      redraw();
+      saveShapes();
+    });
+    document.getElementById('exportButton').addEventListener('click', () => {
+      const data = {
+        version: 1,
+        map: mapId,
+        width: mapWidth,
+        height: mapHeight,
+        paths: shapes.filter(shape => shape.type === 'path'),
+        obstacles: shapes.filter(shape => shape.type === 'obstacle')
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${mapId}-editor.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setStatus('JSON с маршрутами и преградами скачан.');
+    });
+
+    function initializeMap() {
+      if (!mapImage.naturalWidth || mapWidth) return;
+      mapWidth = mapImage.naturalWidth;
+      mapHeight = mapImage.naturalHeight;
+      const loadResult = loadShapes();
+      prepareCanvases();
+      if (loadResult === null) setStatus('Выбери инструмент и рисуй на карте. Разметка сохраняется автоматически.');
+    }
+    mapImage.addEventListener('load', initializeMap);
+    mapImage.addEventListener('error', () => {
+      setStatus('Не удалось загрузить карту. Проверь файл GAME/maps/testMap_01.png.');
+    });
+    window.addEventListener('resize', prepareCanvases);
+    if (mapImage.complete) {
+      if (mapImage.naturalWidth) initializeMap();
+      else setStatus('Не удалось загрузить карту. Проверь файл GAME/maps/testMap_01.png.');
+    }
+  </script>
 </body>
 </html>
