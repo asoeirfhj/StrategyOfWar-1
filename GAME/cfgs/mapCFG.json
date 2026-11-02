@@ -1,0 +1,12 @@
+{
+    "version": 1,
+    "map": {
+        "testMap": {
+            "name": "testMap",
+            "width": 2000,
+            "height": 2000,
+            "background": "maps/testMap.png"
+
+        }
+    }
+}

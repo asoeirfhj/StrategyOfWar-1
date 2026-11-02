@@ -1,0 +1,62 @@
+{
+  "version": 1,
+
+  "unitsFriend": {
+    "unitDefault": {
+      "name": "default",
+      "hp": 100,
+      "damage": 10,
+      "speed": 60,
+      "range": 120,
+      "sprite": "units/Friend-unit_01.svg"
+    },
+
+    "unitFriendLeader": {
+      "name": "leader",
+      "hp": 125,
+      "damage": 15,
+      "speed": 60,
+      "range": 160,
+      "sprite": "units/Friend-unit-Leader_01.svg"
+
+    },
+    
+    "unitFriendSubLeader": {
+      "name": "subLeader",
+      "hp": 110,
+      "damage": 12,
+      "speed": 60,
+      "range": 140,
+      "sprite": "units/Friend-unit-subLeader_01.svg"
+
+    },
+
+    "unitEnemyDefault": {
+        "name":"enemyDefault",
+        "hp": 100,
+        "damage": 10,
+        "speed": 60,
+        "range": 120,
+        "sprite": "units/Enemy-unit_01.svg"
+    },
+
+    "unitEnemyLeader": {
+        "name":"enemyLeader",
+        "hp": 125,
+        "damage": 15,
+        "speed": 60,
+        "range": 160,
+        "sprite": "units/Enemy-unit-Leader_01.svg"
+    },
+
+    "unitEnemySubLeader": {
+      "name": "subLeader",
+      "hp": 110,
+      "damage": 12,
+      "speed": 60,
+      "range": 140,
+      "sprite": "units/Enemy-unit-subLeader_01.svg"
+
+    }
+  }
+}

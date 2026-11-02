@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="32mm"
+   height="32mm"
+   viewBox="0 0 32 32"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.4 (dcaf3e7, 2026-05-05)"
+   sodipodi:docname="Enemy-unit-subLeader_01.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="mm"
+     inkscape:zoom="6.0934343"
+     inkscape:cx="62.854538"
+     inkscape:cy="61.295483"
+     inkscape:window-width="1920"
+     inkscape:window-height="1057"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1" />
+  <defs
+     id="defs1">
+    <linearGradient
+       id="swatch11"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#ffffff;stop-opacity:0;"
+         offset="0"
+         id="stop11" />
+    </linearGradient>
+    <linearGradient
+       id="swatch10"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#7f3400;stop-opacity:1;"
+         offset="0"
+         id="stop10" />
+    </linearGradient>
+  </defs>
+  <g
+     inkscape:label="Слой 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <ellipse
+       style="fill:#ff0000;stroke:#800000;stroke-width:2.9844;stroke-dasharray:none;stroke-opacity:1"
+       id="path1"
+       cx="16"
+       cy="16.000004"
+       rx="10.5078"
+       ry="10.507803" />
+    <path
+       sodipodi:type="star"
+       style="fill:#ffffff;fill-opacity:0;stroke:#ff8080;stroke-width:2;stroke-dasharray:none;stroke-opacity:1"
+       id="path10"
+       inkscape:flatsided="false"
+       sodipodi:sides="4"
+       sodipodi:cx="10.334211"
+       sodipodi:cy="13.503947"
+       sodipodi:r1="2.3322401"
+       sodipodi:r2="1.4190241"
+       sodipodi:arg1="1.0655061"
+       sodipodi:arg2="1.8509043"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="m 11.463159,15.544737 -1.5212502,-0.677071 -1.6484869,-0.234771 0.677071,-1.52125 0.234771,-1.648487 1.5212501,0.677071 1.648487,0.234771 -0.677071,1.52125 z"
+       transform="matrix(2.3020486,1.2780771,-1.2782565,2.3017257,9.4820418,-28.28143)" />
+  </g>
+</svg>
